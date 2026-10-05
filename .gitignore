@@ -1,0 +1,21 @@
+# Course-provided data pack — never commit the database or product images
+data/
+data.zip
+
+# Secrets
+.env
+
+# Python
+.venv/
+__pycache__/
+*.pyc
+
+# Node
+node_modules/
+dist/
+
+# Local editor/tooling config
+.claude/
+.vscode/
+.idea/
+.DS_Store

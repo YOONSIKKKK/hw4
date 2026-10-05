@@ -1,0 +1,217 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Campus Customs — App Check</title>
+    <style>
+      :root {
+        --ink: #0d1a2b;
+        --navy: #00356b;
+        --gold: #b08d50;
+        --paper: #f5f4f0;
+        --muted: #6b7280;
+        --line: rgba(13, 26, 43, 0.14);
+      }
+      * { box-sizing: border-box; }
+      body {
+        margin: 0;
+        padding: 3rem 1.5rem 6rem;
+        background: var(--paper);
+        color: var(--ink);
+        font-family: 'Inter', -apple-system, 'Segoe UI', system-ui, sans-serif;
+        line-height: 1.6;
+      }
+      main { max-width: 56rem; margin: 0 auto; }
+      header.doc {
+        padding-bottom: 1.5rem;
+        border-bottom: 1px solid var(--line);
+        margin-bottom: 3rem;
+      }
+      .eyebrow {
+        margin: 0 0 0.5rem;
+        font-size: 0.7rem;
+        font-weight: 600;
+        letter-spacing: 0.22em;
+        text-transform: uppercase;
+        color: var(--gold);
+      }
+      h1 {
+        margin: 0 0 0.75rem;
+        font-size: clamp(2rem, 5vw, 3rem);
+        letter-spacing: -0.03em;
+        line-height: 1.05;
+      }
+      header.doc p { margin: 0; color: var(--muted); max-width: 60ch; }
+      section { margin-bottom: 4rem; }
+      h2 {
+        display: flex;
+        align-items: baseline;
+        gap: 0.9rem;
+        margin: 0 0 0.75rem;
+        font-size: 1.4rem;
+        letter-spacing: -0.02em;
+      }
+      h2 .num {
+        font-size: 0.78rem;
+        font-weight: 700;
+        letter-spacing: 0.1em;
+        color: var(--gold);
+      }
+      .what {
+        margin: 0 0 1.25rem;
+        color: var(--muted);
+        max-width: 72ch;
+      }
+      .what strong { color: var(--ink); }
+      figure {
+        margin: 0;
+        background: #fff;
+        border: 1px solid var(--line);
+      }
+      figure img { display: block; width: 100%; height: auto; }
+      figcaption {
+        padding: 0.9rem 1.1rem;
+        border-top: 1px solid var(--line);
+        font-size: 0.88rem;
+        color: var(--muted);
+      }
+      .verdict {
+        margin-top: 1rem;
+        padding: 0.75rem 1rem;
+        background: #fff;
+        border-left: 3px solid var(--navy);
+        font-size: 0.9rem;
+      }
+      footer {
+        border-top: 1px solid var(--line);
+        padding-top: 1.5rem;
+        font-size: 0.85rem;
+        color: var(--muted);
+      }
+      code {
+        background: #fff;
+        border: 1px solid var(--line);
+        padding: 0.05rem 0.3rem;
+        font-size: 0.86em;
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <header class="doc">
+        <p class="eyebrow">Campus Customs · Yale Bulldog Blue</p>
+        <h1>App check</h1>
+        <p>
+          Screenshots taken from the running application — React + Vite frontend on
+          <code>:5173</code>, FastAPI backend on <code>:8000</code>, agent answering through
+          Claude Opus 5. Every number shown below was cross-checked against
+          <code>campus_customs.db</code>.
+        </p>
+      </header>
+
+      <section>
+        <h2><span class="num">01</span> Chat inventory lookup — real stock and price</h2>
+        <p class="what">
+          On the <strong>Champion Reverse Weave Hoodie</strong> page, the shopper asks
+          “How many of these are left in XL and in S, and what does it cost?” — without naming the
+          product. The agent resolves “these” from the page it is on, calls
+          <code>check_size_availability</code>, and reports
+          <strong>“XL: none available. S: 25 left. The hoodie costs $68.”</strong>
+        </p>
+        <figure>
+          <img
+            src="app_check_images/inventory-and-price.jpg"
+            alt="Product page for the Champion Reverse Weave Hoodie with the chat assistant reporting XL out of stock, 25 left in S, and a price of $68"
+          />
+          <figcaption>
+            The page itself is the control: it shows <strong>$68.00</strong>, XS marked
+            <strong>Out</strong> and S at <strong>25 left</strong> — exactly what the assistant
+            said. Both come from the same <code>catalogue</code> and <code>inventory</code> rows.
+          </figcaption>
+        </figure>
+        <p class="verdict">
+          Stock and pricing are read live from the database per question, never recalled — a
+          sold-out size is reported as a plain “none available” rather than hedged.
+        </p>
+      </section>
+
+      <section>
+        <h2><span class="num">02</span> Category question renders product cards</h2>
+        <p class="what">
+          Asking <strong>“What hoodies do you have?”</strong> makes the agent search the catalogue,
+          and the frontend renders the structured matches it returns as product cards —
+          image, name, price and a short description — under the reply.
+        </p>
+        <figure>
+          <img
+            src="app_check_images/hoodie-search-cards.jpg"
+            alt="Chat panel showing a reply about hoodies followed by eight product cards with photos, names, prices and descriptions"
+          />
+          <figcaption>
+            “8 matches from the catalogue”, then one card per hoodie. The cards are built from the
+            rows the tools returned — not parsed out of the model’s text — so a product the agent
+            merely mentioned could never appear here. Each card links to that item’s full page.
+          </figcaption>
+        </figure>
+        <p class="verdict">
+          This is the API contract working end to end: the agent supplies structured product
+          matches, the frontend decides how they look.
+        </p>
+      </section>
+
+      <section>
+        <h2><span class="num">03</span> Usability improvement — Shop filter bar <em>(Problem 9, frontend)</em></h2>
+        <p class="what">
+          The Shop page gained a sticky toolbar: free-text search across name, description,
+          garment type, colours and catalogue tags; category chips; an
+          <strong>In stock only</strong> toggle; and price sorting — with a live count in the
+          header.
+        </p>
+        <figure>
+          <img
+            src="app_check_images/shop-filter-bar.jpg"
+            alt="Shop page filtered by the search term bulldog with In stock only active and price sorted low to high, showing 10 of 102 pieces"
+          />
+          <figcaption>
+            Searching <strong>“bulldog”</strong> with <strong>In stock only</strong> on and
+            <strong>Price: low to high</strong> selected narrows 102 products to
+            <strong>10</strong>, correctly ordered from $32 upward. Without this, 102 items sat in
+            one unlabelled grid.
+          </figcaption>
+        </figure>
+      </section>
+
+      <section>
+        <h2><span class="num">04</span> Usability improvement — price-aware search <em>(Problem 9, agent)</em></h2>
+        <p class="what">
+          Budget questions are now answered by the database rather than inferred by the model.
+          <code>search_catalogue</code> takes <code>max_price</code>, <code>min_price</code> and
+          <code>sort</code>, applied across the whole catalogue before results are trimmed.
+          The starter chips visible in the empty chat are part of the same problem’s frontend work.
+        </p>
+        <figure>
+          <img
+            src="app_check_images/price-aware-search.jpg"
+            alt="Chat panel answering Anything under 40 dollars with Yale tees at 32 dollars and product cards"
+          />
+          <figcaption>
+            <strong>“Anything under $40?”</strong> returns the <strong>$32</strong> tees with
+            cards. Before this change the same question was answered
+            <em>“I don’t see anything under $40 right now”</em> — while the shop held 25 items at
+            $32 — because the model was comparing whatever a keyword search happened to return.
+          </figcaption>
+        </figure>
+        <p class="verdict">
+          A wrong answer that would have cost a sale, now correct and checked against the database
+          (cheapest item $32, dearest $98, 25 items at or under $40).
+        </p>
+      </section>
+
+      <footer>
+        Screenshots stored in <code>output/app_check_images/</code> and referenced by relative
+        path. Open this file by double-clicking — no server required.
+      </footer>
+    </main>
+  </body>
+</html>
